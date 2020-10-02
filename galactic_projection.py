@@ -11,7 +11,8 @@ Created on Mon Jun  8 16:35:23 2020
 # on the command line. Stars are differentiated by age, with the velocity 
 # dispersion of each directly measured. Scale height and surface mass density
 # are determined for an indirect measure of velocity dispersion as well.
-# Author: Kathleen Hamilton-Campos, intern at STScI, summer 2020 - kahamil@umd.edu
+# Author: Kathleen Hamilton-Campos, intern at STScI - kahamil@umd.edu
+# Date: Summer 2020
 
 # Import necessary libraries
 import yt
@@ -84,23 +85,6 @@ def parse_args():
 
     args = parser.parse_args()
     return args
-
-'''
-def dir_arg(scale, sim):
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                    description='set parameters for VELA simulation analysis')
-
-    parser.add_argument('--loc', metavar='loc', type=str, action='store',
-                        help='where are the simulations located?')
-    parser.set_defaults(loc='/Users/Kitty/Documents/College/Summer 2020/Simulations/{} Data/{}/10MpcBox_csf512_a{}0.d'.format(sim, scale, scale))
-
-    parser.add_argument('--figdir', metavar='figdir', type=str, action='store',
-                        help='where should figures be saved?')
-    parser.set_defaults(figdir='/Users/Kitty/Documents/College/Summer 2020/Simulations/{} Simulations/{}'.format(sim, scale))
-    
-    arg = parser.parse_args()
-    return arg
-'''
 
 # Set which snapshots the code will analyze and their proper parameters
 args = parse_args()
@@ -214,7 +198,7 @@ if True:
     sim_dict.update([('r90 mass', mass_r90)])
    
 # Angular momentum orientations
-if True:
+if False:
     # Calculating stellar angular momentum
     star_ang_mom_x = sp.quantities.total_quantity([("stars", "particle_angular_momentum_x")])
     star_ang_mom_y = sp.quantities.total_quantity([("stars", "particle_angular_momentum_y")])
@@ -269,7 +253,7 @@ if False:
         prj.save('{}/GasEdgeOn{}-z={}.png'.format(figdir, sim, redshift))
 
 # Making profile plots for velocity dispersion in the cylinder
-if True:
+if False:
     prof_gas = yt.create_profile(cyl, 'radius', ('gas', 'velocity_magnitude'), weight_field = ('gas', 'cell_mass'))
     gas_radius = prof_gas.x.to('kpc')
     std_gas = prof_gas.standard_deviation['gas', 'velocity_magnitude'].to('km/s')
@@ -320,7 +304,7 @@ if True:
     plt.xlabel('Radius [kpc]')
     plt.ylabel('Velocity [km/s]')
     plt.xlim([0, np.max(star_radius)])
-    plt.ylim([0, np.max(std_stars)])
+    plt.ylim([0, np.max(std_gas)])
     plt.legend()
     plt.savefig('{}/VelocityDispersion{}-z={}.png'.format(figdir, sim, redshift))
     plt.show()
@@ -335,6 +319,8 @@ if False:
     sigma_mg = np.zeros(shape=(int(cyl_rad)))
     sigma_all = np.zeros(shape=(int(cyl_rad)))
     h_z = np.zeros(shape=(int(cyl_rad)))
+    smd_mass = np.zeros(shape=(int(cyl_rad)))
+    smd_mg = np.zeros(shape=(int(cyl_rad)))
 
     dic = {}
     dic[('stars', 'particle_position_cylindrical_z')] = False
@@ -391,7 +377,9 @@ if False:
         proj_area = np.pi * (outer_conv**2 - inner_conv**2)
         sigma_dyn = ((mass_quant * u.Msun).to('kg') + (gas_quant * u.Msun).to('kg') + (dm_quant * u.Msun).to('kg')) / (proj_area)
         mass_dens = (mass_quant * u.Msun).to('kg') / (proj_area)
+        smd_mass[int(shell)] = mass_dens.value
         mass_gas = ((mass_quant * u.Msun).to('kg') + (gas_quant * u.Msun).to('kg')) / (proj_area)
+        smd_mg[int(shell)] = mass_gas.value
         sigma_mass_calc = np.sqrt(const*np.pi*G_conv*z_0*mass_dens)
         sigma_mg_calc = np.sqrt(const*np.pi*G_conv*z_0*mass_gas)
         sigma_dyn_calc = np.sqrt(const*np.pi*G_conv*z_0*sigma_dyn)
@@ -430,10 +418,10 @@ if False:
 
 if False:
     rad_comp = np.arange(1, cyl_rad+1)
-        
+
     # Plotting the comparisons of vertical velocity dispersion via different methods
     plt.plot(star_radius, std_stars, '*', color='black', label='Standard Deviation Projection')
-    plt.plot(rad_comp, sigma_shell, label='Shell Sigma')
+    plt.plot(rad_comp, sigma_shell, '*', color='blue', label='Shell Sigma')
     plt.plot(rad_comp, sigma_all, '*', color='purple', label=r'Theoretical $\sigma_z$ with $Sigma_{dyn}$')
     plt.plot(rad_comp, sigma_mg, '*', color='orchid', label=r'Theoretical $\sigma_z$ with Stars and Gas')
     plt.plot(rad_comp, sigma_mass, '*', color='plum', label=r'Theoretical $\sigma_z$ with Stars')
